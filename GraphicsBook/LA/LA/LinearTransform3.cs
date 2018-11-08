@@ -198,8 +198,7 @@ namespace LIN_ALG
         /// <returns>the determinant</returns>
         public double Det()
         {
-            MathNet.Numerics.LinearAlgebra.Matrix m = new MathNet.Numerics.LinearAlgebra.Matrix(mat);
-            return m.Determinant();
+            return MathNet.Numerics.LinearAlgebra.Matrix<double>.Build.DenseOfArray(mat).Determinant();
         }
 
         /// <summary>

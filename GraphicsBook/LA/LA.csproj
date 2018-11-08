@@ -31,10 +31,6 @@
     <RootNamespace>LA</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MathNet.Iridium, Version=2007.3.8.35795, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>LinAlg\bin\Debug\MathNet.Iridium.dll</HintPath>
-    </Reference>
     <Reference Include="MathNet.Numerics, Version=4.6.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\MathNet.Numerics.4.6.0\lib\net40\MathNet.Numerics.dll</HintPath>
     </Reference>
