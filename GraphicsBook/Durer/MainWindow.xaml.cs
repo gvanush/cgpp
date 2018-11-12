@@ -120,6 +120,11 @@ namespace GraphicsBook
                 new Vector3(0.5, -0.5, 3.5)
             };
 
+            for(int i = 0; i < vertices.Length; ++i) {
+                vertices[i].y -= 1.0;
+        vertices[i].z += 5.0;
+      }
+
             FaceI[] faces = new FaceI[12] {
                 new FaceI(0, 1, 2),
                 new FaceI(0, 2, 3),
@@ -142,15 +147,21 @@ namespace GraphicsBook
         {
 
             Vector3[] vertices = new Vector3[6] {
-                new Vector3(-0.5, -1.5, 2.5),
-                new Vector3(0.5, -1.5, 2.5),
-                new Vector3(0.0, -1.5, 3.5),
                 new Vector3(-0.5, -0.5, 2.5),
                 new Vector3(0.5, -0.5, 2.5),
                 new Vector3(0.0, -0.5, 3.5),
+                new Vector3(-0.5, 0.5, 2.5),
+                new Vector3(0.5, 0.5, 2.5),
+                new Vector3(0.0, 0.5, 3.5),
             };
 
-            FaceI[] faces = new FaceI[8] {
+      for (int i = 0; i < vertices.Length; ++i)
+      {
+        vertices[i].y -= 4.0;
+        vertices[i].z += 5.0;
+      }
+
+      FaceI[] faces = new FaceI[8] {
                 new FaceI(1, 2, 0),
                 new FaceI(4, 3, 5),
                 new FaceI(0, 2, 3),
@@ -180,7 +191,7 @@ namespace GraphicsBook
             // Now add some graphical items in the main Canvas, whose name is "GraphPaper"
             gp = this.FindName("Paper") as GraphPaper;
             
-            Vector3 eyeDirection = new Vector3(0.0, 0.0, 1.0);
+            Vector3 eyePos = new Vector3(0.0, 0.0, 0.0);
             
             // Build a table of edges
             /*int [,] etable = new int[nMaxEdges, 2]{
@@ -189,7 +200,7 @@ namespace GraphicsBook
                 {4, 5}, {5, 6}, {6, 7}, {7, 4}}; // opposite face*/
             var edges = new HashSet<EdgeI>();
 
-            // var geometry = Geometry.Cube();
+            //var geometry = Geometry.Cube();
             var geometry = Geometry.TriangularPrism();
 
             foreach (var face in geometry.Faces)
@@ -206,7 +217,7 @@ namespace GraphicsBook
                 // Face culling
                 if (faceCullingEnabled)
                 {
-                    if (Vector3.Dot(Vector3.Cross(v1, v2), eyeDirection) < 0.0)
+                    if (Vector3.Dot(Vector3.Cross(v1, v2), p1 - eyePos) < 0.0)
                     {
                         edges.Add(new EdgeI(face.i1, face.i2));
                         edges.Add(new EdgeI(face.i2, face.i3));
