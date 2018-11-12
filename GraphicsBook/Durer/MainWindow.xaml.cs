@@ -26,6 +26,16 @@ namespace GraphicsBook
                 v1.x * v2.y - v1.y * v2.x);
         }
 
+        public static Vector3 operator +(Vector3 v1, Vector3 v2)
+        {
+            return new Vector3(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+        }
+
+        public static Vector3 operator -(Vector3 v1, Vector3 v2)
+        {
+            return new Vector3(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+        }
+
         public double x;
         public double y;
         public double z;
@@ -55,6 +65,107 @@ namespace GraphicsBook
         public int i2;
     }
 
+    class FaceI
+    {
+
+        public FaceI(int ii1, int ii2, int ii3)
+        {
+            i1 = ii1;
+            i2 = ii2;
+            i3 = ii3;
+        }
+
+        public override int GetHashCode()
+        {
+            return i1.GetHashCode() + i2.GetHashCode() + i3.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (this == obj) return true;
+
+            var other = obj as FaceI;
+            if (other == null) return false;
+
+            return (i1 == other.i1 && ((i2 == other.i2 && i3 == other.i3) || (i2 == other.i3 && i3 == other.i2))) ||
+                (i1 == other.i2 && ((i2 == other.i1 && i3 == other.i3) || (i2 == other.i3 && i3 == other.i1))) ||
+                (i1 == other.i3 && ((i2 == other.i1 && i3 == other.i2) || (i2 == other.i2 && i3 == other.i1)));
+        }
+
+        public int i1;
+        public int i2;
+        public int i3;
+    }
+
+    class Geometry {
+
+        public Geometry(Vector3[] vs, FaceI[] fs) {
+            Vertices = vs;
+            Faces = fs;
+        }
+
+        public Vector3[] Vertices { get; set; }
+        public FaceI[] Faces { get; set; }
+
+        public static Geometry Cube() {
+
+            Vector3[] vertices = new Vector3[8] {
+                new Vector3(-0.5, -0.5, 2.5),
+                new Vector3(-0.5, 0.5, 2.5),
+                new Vector3(0.5, 0.5, 2.5),
+                new Vector3(0.5, -0.5, 2.5),
+                new Vector3(-0.5, -0.5, 3.5),
+                new Vector3(-0.5, 0.5, 3.5),
+                new Vector3(0.5, 0.5, 3.5),
+                new Vector3(0.5, -0.5, 3.5)
+            };
+
+            FaceI[] faces = new FaceI[12] {
+                new FaceI(0, 1, 2),
+                new FaceI(0, 2, 3),
+                new FaceI(2, 6, 7),
+                new FaceI(2, 7, 3),
+                new FaceI(5, 4, 7),
+                new FaceI(5, 7, 6),
+                new FaceI(5, 1, 0),
+                new FaceI(5, 0, 4),
+                new FaceI(0, 3, 7),
+                new FaceI(0, 7, 4),
+                new FaceI(1, 5, 6),
+                new FaceI(1, 6, 2)
+            };
+
+            return new Geometry(vertices, faces);
+        }
+
+        public static Geometry TriangularPrism()
+        {
+
+            Vector3[] vertices = new Vector3[6] {
+                new Vector3(-0.5, -1.5, 2.5),
+                new Vector3(0.5, -1.5, 2.5),
+                new Vector3(0.0, -1.5, 3.5),
+                new Vector3(-0.5, -0.5, 2.5),
+                new Vector3(0.5, -0.5, 2.5),
+                new Vector3(0.0, -0.5, 3.5),
+            };
+
+            FaceI[] faces = new FaceI[8] {
+                new FaceI(1, 2, 0),
+                new FaceI(4, 3, 5),
+                new FaceI(0, 2, 3),
+                new FaceI(2, 5, 3),
+                new FaceI(1, 4, 2),
+                new FaceI(2, 4, 5),
+                new FaceI(1, 0, 4),
+                new FaceI(4, 0, 3)
+            };
+
+            return new Geometry(vertices, faces);
+        }
+
+    }
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -68,62 +179,46 @@ namespace GraphicsBook
             InitializeCommands();
             // Now add some graphical items in the main Canvas, whose name is "GraphPaper"
             gp = this.FindName("Paper") as GraphPaper;
-            // Build a table of vertices:
-            const int nPoints = 8;
-            //const int nEdges = 12;
             
-            const int nFaces = 6;
             Vector3 eyeDirection = new Vector3(0.0, 0.0, 1.0);
-            double[,] vtable = new double[nPoints, 3] 
-            {
-            {-0.5, -0.5, 2.5},
-            {-0.5, 0.5, 2.5},
-            {0.5, 0.5, 2.5},
-            {0.5, -0.5, 2.5},
-            {-0.5, -0.5, 3.5},
-            {-0.5, 0.5, 3.5},
-            {0.5, 0.5, 3.5},
-            {0.5, -0.5, 3.5}};
+            
             // Build a table of edges
             /*int [,] etable = new int[nMaxEdges, 2]{
                 {0, 1}, {1, 2}, {2, 3}, {3,0}, // one face
                 {0,4}, {1,5}, {2, 6}, {3, 7},  // joining edges
                 {4, 5}, {5, 6}, {6, 7}, {7, 4}}; // opposite face*/
             var edges = new HashSet<EdgeI>();
-            int[,] ftable = new int[nFaces, 4] {
-                {0, 1, 2, 3}, 
-                {2, 6, 7, 3}, 
-                {5, 4, 7, 6}, 
-                {5, 1, 0, 4},
-                {0, 3, 7, 4},
-                {1, 5, 6, 2}
-            };
 
-            for (int i = 0; i < nFaces; i++)
+            // var geometry = Geometry.Cube();
+            var geometry = Geometry.TriangularPrism();
+
+            foreach (var face in geometry.Faces)
             {
 
-                var p0x = vtable[ftable[i, 0], 0];
-                var p0y = vtable[ftable[i, 0], 1];
-                var p0z = vtable[ftable[i, 0], 2];
+                var p1 = geometry.Vertices[face.i1];
+                var p2 = geometry.Vertices[face.i2];
+                var p3 = geometry.Vertices[face.i3];
 
-                var p1x = vtable[ftable[i, 1], 0];
-                var p1y = vtable[ftable[i, 1], 1];
-                var p1z = vtable[ftable[i, 1], 2];
+                var v1 = p2 - p1;
+                var v2 = p3 - p2;
 
-                var p2x = vtable[ftable[i, 2], 0];
-                var p2y = vtable[ftable[i, 2], 1];
-                var p2z = vtable[ftable[i, 2], 2];
-
-                var v1 = new Vector3(p1x - p0x, p1y - p0y, p1z - p0z);
-                var v2 = new Vector3(p2x - p1x, p2y - p1y, p2z - p1z);
-                if (Vector3.Dot(Vector3.Cross(v1, v2), eyeDirection) < 0.0)
+                bool faceCullingEnabled = true;
+                // Face culling
+                if (faceCullingEnabled)
                 {
-                    edges.Add(new EdgeI(ftable[i, 0], ftable[i, 1]));
-                    edges.Add(new EdgeI(ftable[i, 1], ftable[i, 2]));
-                    edges.Add(new EdgeI(ftable[i, 2], ftable[i, 3]));
-                    edges.Add(new EdgeI(ftable[i, 3], ftable[i, 0]));
+                    if (Vector3.Dot(Vector3.Cross(v1, v2), eyeDirection) < 0.0)
+                    {
+                        edges.Add(new EdgeI(face.i1, face.i2));
+                        edges.Add(new EdgeI(face.i2, face.i3));
+                        edges.Add(new EdgeI(face.i3, face.i1));
+                    }
                 }
-
+                else {
+                    edges.Add(new EdgeI(face.i1, face.i2));
+                    edges.Add(new EdgeI(face.i2, face.i3));
+                    edges.Add(new EdgeI(face.i3, face.i1));
+                }
+                
             }
 
             double xmin = -0.5;
@@ -131,28 +226,23 @@ namespace GraphicsBook
             double ymin = -0.5;
             double ymax = 0.5;
 
-            Point [] pictureVertices = new Point[nPoints];
+            Point [] pictureVertices = new Point[geometry.Vertices.Length];
             double scale = 100;
-            for (int i = 0; i < nPoints; i++)
+            for (int i = 0; i < pictureVertices.Length; i++)
             {
-                double x = vtable[i, 0];
-                double y = vtable[i, 1];
-                double z = vtable[i, 2];
-                double xprime = x / z;
-                double yprime = y / z;
+                var p = geometry.Vertices[i];
+                double xprime = p.x / p.z;
+                double yprime = p.y / p.z;
                 pictureVertices[i].X = scale * (1-(xprime - xmin) / (xmax - xmin));
                 pictureVertices[i].Y = scale * (yprime - ymin) / (ymax - ymin); // x / z
                 //gp.Children.Add(new Dot(pictureVertices[i].X, pictureVertices[i].Y));
             }
+
             foreach (var edge in edges)
             {
                 gp.Children.Add(new Segment(pictureVertices[edge.i1], pictureVertices[edge.i2]));
             }
-            /*for (int i = 0; i < nPoints; i++)
-            {
-                gp.Children.Add(new Dot(pictureVertices[i].X, pictureVertices[i].Y));
-            }*/
-
+            
             ready = true; // Now we're ready to have sliders and buttons influence the display.
         }
 
