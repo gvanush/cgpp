@@ -30,16 +30,67 @@
     cut-and-paste.
     -->
         <StackPanel DockPanel.Dock ="Left" Orientation="Vertical" Background="#ECE9D8">
-            <TextBlock Margin="3"  Text="Controls"/>
-            <Button Margin="3,5" HorizontalAlignment="Left" Click="b1Click">Next</Button>
-            <Button Margin="3,5" HorizontalAlignment="Left" Click="b2Click">Do It</Button>
-            <Slider Width="100" Value="0" Orientation="Horizontal" ValueChanged="slider1change" HorizontalAlignment="Left"
-       IsSnapToTickEnabled="True"  Maximum="20" TickPlacement="BottomRight"
-       AutoToolTipPlacement="BottomRight" TickFrequency="2"
+            <TextBlock Margin="3"  Text="Shape"/>
+			<ComboBox SelectionChanged="shapeChange">
+				<ComboBoxItem IsSelected="True" Tag="geometry/cube.json">Cube</ComboBoxItem>
+				<ComboBoxItem Tag="geometry/triangular_prism.json">Triangular Prism</ComboBoxItem>
+				<ComboBoxItem Tag="geometry/tetrahedron.json">Tetrahedron</ComboBoxItem>
+			</ComboBox>
+			<CheckBox Margin="3" HorizontalAlignment="Left" Click="toggleFaceCulling">Face culling</CheckBox>
+
+			<Label VerticalAlignment="Center">Position</Label>
+			<StackPanel DockPanel.Dock ="Left" Orientation="Horizontal" Background="#ECE9D8">
+				<Label VerticalAlignment="Center">X</Label>
+				<Slider Width="200" Value="0" Orientation="Horizontal" ValueChanged="positionXSliderChange" HorizontalAlignment="Left" VerticalAlignment="Center"
+       IsSnapToTickEnabled="True" Minimum="-2" Maximum="2" TickPlacement="BottomRight"
+       AutoToolTipPlacement="BottomRight" TickFrequency="0.1"
        AutoToolTipPrecision="2" IsDirectionReversed="False"
        IsMoveToPointEnabled="False"/>
+			</StackPanel>
+			<StackPanel DockPanel.Dock ="Left" Orientation="Horizontal" Background="#ECE9D8">
+				<Label VerticalAlignment="Center">Y</Label>
+				<Slider Width="200" Value="0" Orientation="Horizontal" ValueChanged="positionYSliderChange" HorizontalAlignment="Left" VerticalAlignment="Center"
+       IsSnapToTickEnabled="True" Minimum="-2" Maximum="2" TickPlacement="BottomRight"
+       AutoToolTipPlacement="BottomRight" TickFrequency="0.1"
+       AutoToolTipPrecision="2" IsDirectionReversed="False"
+       IsMoveToPointEnabled="False"/>
+			</StackPanel>
+			<StackPanel DockPanel.Dock ="Left" Orientation="Horizontal" Background="#ECE9D8">
+				<Label VerticalAlignment="Center">Z</Label>
+				<Slider Width="200" Value="3" Orientation="Horizontal" ValueChanged="positionZSliderChange" HorizontalAlignment="Left" VerticalAlignment="Center"
+       IsSnapToTickEnabled="True" Minimum="1" Maximum="10" TickPlacement="BottomRight"
+       AutoToolTipPlacement="BottomRight" TickFrequency="0.1"
+       AutoToolTipPrecision="2" IsDirectionReversed="False"
+       IsMoveToPointEnabled="False"/>
+			</StackPanel>
 
-        </StackPanel>
+			<Label VerticalAlignment="Center">Rotation</Label>
+			<StackPanel DockPanel.Dock ="Left" Orientation="Horizontal" Background="#ECE9D8">
+				<Label VerticalAlignment="Center">X</Label>
+				<Slider Width="200" Value="0" Orientation="Horizontal" ValueChanged="rotationXSliderChange" HorizontalAlignment="Left" VerticalAlignment="Center"
+       IsSnapToTickEnabled="True"  Maximum="360" TickPlacement="BottomRight"
+       AutoToolTipPlacement="BottomRight" TickFrequency="1"
+       AutoToolTipPrecision="2" IsDirectionReversed="False"
+       IsMoveToPointEnabled="False"/>
+			</StackPanel>
+			<StackPanel DockPanel.Dock ="Left" Orientation="Horizontal" Background="#ECE9D8">
+				<Label VerticalAlignment="Center">Y</Label>
+				<Slider Width="200" Value="0" Orientation="Horizontal" ValueChanged="rotationYSliderChange" HorizontalAlignment="Left" VerticalAlignment="Center"
+       IsSnapToTickEnabled="True"  Maximum="360" TickPlacement="BottomRight"
+       AutoToolTipPlacement="BottomRight" TickFrequency="1"
+       AutoToolTipPrecision="2" IsDirectionReversed="False"
+       IsMoveToPointEnabled="False"/>
+			</StackPanel>
+			<StackPanel DockPanel.Dock ="Left" Orientation="Horizontal" Background="#ECE9D8">
+				<Label VerticalAlignment="Center">Z</Label>
+				<Slider Width="200" Value="0" Orientation="Horizontal" ValueChanged="rotationZSliderChange" HorizontalAlignment="Left" VerticalAlignment="Center"
+       IsSnapToTickEnabled="True"  Maximum="360" TickPlacement="BottomRight"
+       AutoToolTipPlacement="BottomRight" TickFrequency="1"
+       AutoToolTipPrecision="2" IsDirectionReversed="False"
+       IsMoveToPointEnabled="False"/>
+			</StackPanel>
+			
+		</StackPanel>
         <Grid ClipToBounds="True">
             <k:GraphPaper x:Name="Paper"></k:GraphPaper>
         </Grid>

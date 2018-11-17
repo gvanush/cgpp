@@ -3,13 +3,16 @@ using System.Windows;
 using System.Windows.Input;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Windows.Controls;
+using Newtonsoft.Json.Linq;
+using System.IO;
 
 namespace GraphicsBook
 {
 
     public struct Vector3 {
 
-        public Vector3(double xx, double yy, double zz) {
+        public Vector3(double xx = 0.0, double yy = 0.0, double zz = 0.0) {
             x = xx;
             y = yy;
             z = zz;
@@ -107,72 +110,24 @@ namespace GraphicsBook
         public Vector3[] Vertices { get; set; }
         public FaceI[] Faces { get; set; }
 
-        public static Geometry Cube() {
+        public static Geometry Create(string file) {
 
-            Vector3[] vertices = new Vector3[8] {
-                new Vector3(-0.5, -0.5, 2.5),
-                new Vector3(-0.5, 0.5, 2.5),
-                new Vector3(0.5, 0.5, 2.5),
-                new Vector3(0.5, -0.5, 2.5),
-                new Vector3(-0.5, -0.5, 3.5),
-                new Vector3(-0.5, 0.5, 3.5),
-                new Vector3(0.5, 0.5, 3.5),
-                new Vector3(0.5, -0.5, 3.5)
-            };
+			var data = JObject.Parse(File.ReadAllText(file));
 
-            for(int i = 0; i < vertices.Length; ++i) {
-                vertices[i].y -= 1.0;
-        vertices[i].z += 5.0;
-      }
+			var vertices = new List<Vector3>();
+			foreach (var token in data["vertices"].Children()) {
+				var vertData = token.ToObject<float[]>();
+				vertices.Add(new Vector3(vertData[0], vertData[1], vertData[2]));
+			}
 
-            FaceI[] faces = new FaceI[12] {
-                new FaceI(0, 1, 2),
-                new FaceI(0, 2, 3),
-                new FaceI(2, 6, 7),
-                new FaceI(2, 7, 3),
-                new FaceI(5, 4, 7),
-                new FaceI(5, 7, 6),
-                new FaceI(5, 1, 0),
-                new FaceI(5, 0, 4),
-                new FaceI(0, 3, 7),
-                new FaceI(0, 7, 4),
-                new FaceI(1, 5, 6),
-                new FaceI(1, 6, 2)
-            };
+			var faces = new List<FaceI>();
+			foreach (var token in data["faces"].Children())
+			{
+				var faceData = token.ToObject<int[]>();
+				faces.Add(new FaceI(faceData[0], faceData[1], faceData[2]));
+			}
 
-            return new Geometry(vertices, faces);
-        }
-
-        public static Geometry TriangularPrism()
-        {
-
-            Vector3[] vertices = new Vector3[6] {
-                new Vector3(-0.5, -0.5, 2.5),
-                new Vector3(0.5, -0.5, 2.5),
-                new Vector3(0.0, -0.5, 3.5),
-                new Vector3(-0.5, 0.5, 2.5),
-                new Vector3(0.5, 0.5, 2.5),
-                new Vector3(0.0, 0.5, 3.5),
-            };
-
-      for (int i = 0; i < vertices.Length; ++i)
-      {
-        vertices[i].y -= 4.0;
-        vertices[i].z += 5.0;
-      }
-
-      FaceI[] faces = new FaceI[8] {
-                new FaceI(1, 2, 0),
-                new FaceI(4, 3, 5),
-                new FaceI(0, 2, 3),
-                new FaceI(2, 5, 3),
-                new FaceI(1, 4, 2),
-                new FaceI(2, 4, 5),
-                new FaceI(1, 0, 4),
-                new FaceI(4, 0, 3)
-            };
-
-            return new Geometry(vertices, faces);
+            return new Geometry(vertices.ToArray(), faces.ToArray());
         }
 
     }
@@ -184,107 +139,219 @@ namespace GraphicsBook
     {
         GraphPaper gp = null; 
         bool ready = false;  // Flag for allowing sliders, etc., to influence display. 
-        public MainWindow()
+		string shapeFile;
+		bool faceCullingEnabled = false;
+		int geometryStartingIndex;
+		Vector3 position;
+		Vector3 rotation;
+
+		public MainWindow()
         {
             InitializeComponent();
             InitializeCommands();
-            // Now add some graphical items in the main Canvas, whose name is "GraphPaper"
+           
             gp = this.FindName("Paper") as GraphPaper;
-            
-            Vector3 eyePos = new Vector3(0.0, 0.0, 0.0);
-            
-            // Build a table of edges
-            /*int [,] etable = new int[nMaxEdges, 2]{
-                {0, 1}, {1, 2}, {2, 3}, {3,0}, // one face
-                {0,4}, {1,5}, {2, 6}, {3, 7},  // joining edges
-                {4, 5}, {5, 6}, {6, 7}, {7, 4}}; // opposite face*/
-            var edges = new HashSet<EdgeI>();
+			ResetTransformation();
+			geometryStartingIndex = gp.Children.Count;
+			shapeFile = "geometry/cube.json";
 
-            //var geometry = Geometry.Cube();
-            var geometry = Geometry.TriangularPrism();
+			RebuildGeometry();
 
-            foreach (var face in geometry.Faces)
-            {
-
-                var p1 = geometry.Vertices[face.i1];
-                var p2 = geometry.Vertices[face.i2];
-                var p3 = geometry.Vertices[face.i3];
-
-                var v1 = p2 - p1;
-                var v2 = p3 - p2;
-
-                bool faceCullingEnabled = true;
-                // Face culling
-                if (faceCullingEnabled)
-                {
-                    if (Vector3.Dot(Vector3.Cross(v1, v2), p1 - eyePos) < 0.0)
-                    {
-                        edges.Add(new EdgeI(face.i1, face.i2));
-                        edges.Add(new EdgeI(face.i2, face.i3));
-                        edges.Add(new EdgeI(face.i3, face.i1));
-                    }
-                }
-                else {
-                    edges.Add(new EdgeI(face.i1, face.i2));
-                    edges.Add(new EdgeI(face.i2, face.i3));
-                    edges.Add(new EdgeI(face.i3, face.i1));
-                }
-                
-            }
-
-            double xmin = -0.5;
-            double xmax = 0.5;
-            double ymin = -0.5;
-            double ymax = 0.5;
-
-            Point [] pictureVertices = new Point[geometry.Vertices.Length];
-            double scale = 100;
-            for (int i = 0; i < pictureVertices.Length; i++)
-            {
-                var p = geometry.Vertices[i];
-                double xprime = p.x / p.z;
-                double yprime = p.y / p.z;
-                pictureVertices[i].X = scale * (1-(xprime - xmin) / (xmax - xmin));
-                pictureVertices[i].Y = scale * (yprime - ymin) / (ymax - ymin); // x / z
-                //gp.Children.Add(new Dot(pictureVertices[i].X, pictureVertices[i].Y));
-            }
-
-            foreach (var edge in edges)
-            {
-                gp.Children.Add(new Segment(pictureVertices[edge.i1], pictureVertices[edge.i2]));
-            }
-            
-            ready = true; // Now we're ready to have sliders and buttons influence the display.
+			ready = true; // Now we're ready to have sliders and buttons influence the display.
         }
 
+		void ResetTransformation() {
+			position = new Vector3(0.0, 0.0, 3.0);
+			rotation = new Vector3();
+		}
 
+		void RebuildGeometry() {
 
-#region Interaction handling -- sliders and buttons
-        /* Vestigial handling-code from Testbed2DApp -- unused in this project. */
+			// Clean the scene
+			gp.Children.RemoveRange(geometryStartingIndex, gp.Children.Count - geometryStartingIndex);
 
-        /* Event handler for a click on button one */
-        public void b1Click(object sender, RoutedEventArgs e)
-        {
-            Debug.Print("Button one clicked!\n");
-            e.Handled = true; // don't propagate the click any further
-        }
+			Vector3 eyePos = new Vector3(0.0, 0.0, 0.0);
+			var edges = new HashSet<EdgeI>();
 
-        void slider1change(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-            Debug.Print("Slider changed, ready = " + ready + ", and val = " + e.NewValue + ".\n");
-            e.Handled = true;
-            if (ready)
-            {
-            }
-        }
-        public void b2Click(object sender, RoutedEventArgs e)
-        {
-            Debug.Print("Button two clicked!\n");
-            e.Handled = true; // don't propagate the click any further
-        }
-#endregion
-#region Menu, command, and keypress handling
-        protected static RoutedCommand ExitCommand;
+			//var geometry = Geometry.Create("geometry/cube.json");
+			var geometry = Geometry.Create(shapeFile);
+
+			var transformedVertices = new Vector3[geometry.Vertices.Length];
+			for (int i = 0; i < geometry.Vertices.Length; ++i) {
+
+				var vert = geometry.Vertices[i];
+
+				// Around x
+				var y = vert.y * Math.Cos(rotation.x) - vert.z * Math.Sin(rotation.x);
+				var z = vert.y * Math.Sin(rotation.x) + vert.z * Math.Cos(rotation.x);
+				vert.y = y;
+				vert.z = z;
+
+				// Around y
+				z = vert.z * Math.Cos(rotation.y) - vert.x * Math.Sin(rotation.y);
+				var x = vert.z * Math.Sin(rotation.y) + vert.x * Math.Cos(rotation.y);
+				vert.x = x;
+				vert.z = z;
+
+				// around z
+				x = vert.x * Math.Cos(rotation.z) - vert.y * Math.Sin(rotation.z);
+				y = vert.x * Math.Sin(rotation.z) + vert.y * Math.Cos(rotation.z);
+				vert.x = x;
+				vert.y = y;
+
+				transformedVertices[i] = vert + position;
+			}
+
+			foreach (var face in geometry.Faces)
+			{
+
+				var p1 = transformedVertices[face.i1];
+				var p2 = transformedVertices[face.i2];
+				var p3 = transformedVertices[face.i3];
+
+				var v1 = p2 - p1;
+				var v2 = p3 - p2;
+
+				// Face culling
+				if (faceCullingEnabled)
+				{
+					if (Vector3.Dot(Vector3.Cross(v1, v2), p1 - eyePos) < 0.0)
+					{
+						edges.Add(new EdgeI(face.i1, face.i2));
+						edges.Add(new EdgeI(face.i2, face.i3));
+						edges.Add(new EdgeI(face.i3, face.i1));
+					}
+				}
+				else
+				{
+					edges.Add(new EdgeI(face.i1, face.i2));
+					edges.Add(new EdgeI(face.i2, face.i3));
+					edges.Add(new EdgeI(face.i3, face.i1));
+				}
+
+			}
+
+			double xmin = -0.5;
+			double xmax = 0.5;
+			double ymin = -0.5;
+			double ymax = 0.5;
+
+			Point[] pictureVertices = new Point[transformedVertices.Length];
+			double scale = 100;
+			for (int i = 0; i < pictureVertices.Length; i++)
+			{
+				var p = transformedVertices[i];
+				double xprime = p.x / p.z;
+				double yprime = p.y / p.z;
+				pictureVertices[i].X = scale * (1 - (xprime - xmin) / (xmax - xmin));
+				pictureVertices[i].Y = scale * (yprime - ymin) / (ymax - ymin); // x / z
+				//gp.Children.Add(new Dot(pictureVertices[i].X, pictureVertices[i].Y));
+			}
+
+			geometryStartingIndex = gp.Children.Count;
+			foreach (var edge in edges)
+			{
+				gp.Children.Add(new Segment(pictureVertices[edge.i1], pictureVertices[edge.i2]));
+			}
+
+		}
+
+		#region Interaction handling -- sliders and buttons
+		/* Vestigial handling-code from Testbed2DApp -- unused in this project. */
+
+		void shapeChange(object sender, RoutedEventArgs e) {
+			if (!ready)
+			{
+				return;
+			}
+
+			var combo = sender as ComboBox;
+			var item = combo.SelectedItem as ComboBoxItem;
+			shapeFile = item.Tag as string;
+			ResetTransformation();
+			RebuildGeometry();
+		}
+
+		public void toggleFaceCulling(object sender, RoutedEventArgs e) {
+			
+			if (!ready) {
+				return;
+			}
+
+			var checkbox = sender as CheckBox;
+			faceCullingEnabled = checkbox.IsChecked.Value;
+			RebuildGeometry();
+		}
+
+		public void positionXSliderChange(object sender, RoutedEventArgs e)
+		{
+			if (!ready)
+			{
+				return;
+			}
+
+			var slider = sender as Slider;
+			position.x = slider.Value;
+			RebuildGeometry();
+		}
+
+		public void positionYSliderChange(object sender, RoutedEventArgs e)
+		{
+			if (!ready)
+			{
+				return;
+			}
+			var slider = sender as Slider;
+			position.y = slider.Value;
+			RebuildGeometry();
+		}
+
+		public void positionZSliderChange(object sender, RoutedEventArgs e)
+		{
+			if (!ready)
+			{
+				return;
+			}
+			var slider = sender as Slider;
+			position.z = slider.Value;
+			RebuildGeometry();
+		}
+
+		public void rotationXSliderChange(object sender, RoutedEventArgs e) {
+			if (!ready)
+			{
+				return;
+			}
+			var slider = sender as Slider;
+			rotation.x = slider.Value * Math.PI / 180;
+			RebuildGeometry();
+		}
+
+		public void rotationYSliderChange(object sender, RoutedEventArgs e)
+		{
+			if (!ready)
+			{
+				return;
+			}
+			var slider = sender as Slider;
+			rotation.y = slider.Value * Math.PI / 180;
+			RebuildGeometry();
+		}
+
+		public void rotationZSliderChange(object sender, RoutedEventArgs e)
+		{
+			if (!ready)
+			{
+				return;
+			}
+			var slider = sender as Slider;
+			rotation.z = slider.Value * Math.PI / 180;
+			RebuildGeometry();
+		}
+
+		#endregion
+		#region Menu, command, and keypress handling
+		protected static RoutedCommand ExitCommand;
         protected void InitializeCommands()
         {
             InputGestureCollection inp = new InputGestureCollection();
