@@ -90,13 +90,13 @@ namespace GraphicsBook
             {
                 int lasti = (i + (n - 1)) % n ; // index of previous point
                 int nexti = (i + 1) % n; // index of next point.
-                double x = (1.0f / 4.0f) * myPolygon.Points[lasti].X + (3.0f / 4.0f) * myPolygon.Points[i].X;
-                double y = (1.0f / 4.0f) * myPolygon.Points[lasti].Y + (3.0f / 4.0f) * myPolygon.Points[i].Y;
+                double x = (1.0f / 2.0f) * myPolygon.Points[lasti].X + (1.0f / 2.0f) * myPolygon.Points[i].X;
+                double y = (1.0f / 2.0f) * myPolygon.Points[lasti].Y + (1.0f / 2.0f) * myPolygon.Points[i].Y;
                 mySubdivPolygon.Points.Add(new Point(x, y));
             
-                x = (1.0f / 4.0f) * myPolygon.Points[nexti].X + (3.0f / 4.0f) * myPolygon.Points[i].X;
+                /*x = (1.0f / 4.0f) * myPolygon.Points[nexti].X + (3.0f / 4.0f) * myPolygon.Points[i].X;
                 y = (1.0f / 4.0f) * myPolygon.Points[nexti].Y + (3.0f / 4.0f) * myPolygon.Points[i].Y;
-                mySubdivPolygon.Points.Add(new Point(x, y));
+                mySubdivPolygon.Points.Add(new Point(x, y));*/
             }
             e.Handled = true; // don't propagate the click any further
         }
