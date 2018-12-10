@@ -7,7 +7,7 @@ using System.Windows.Media.Animation;
 using System.Windows.Shapes;
 
 using System.Diagnostics;
-using System.ComponentModel;
+using System.Windows.Controls;
 
 namespace GraphicsBook
 {
@@ -16,12 +16,14 @@ namespace GraphicsBook
     /// </summary>
     public partial class Window1 : Window
     {
-        GraphPaper gp = null;
+		Canvas canvas;
 
-		Dot[] myDots = null;
-		Circle myCircle = null;
-		Random autoRand = new System.Random();
-
+        GImage ball = null;
+		GImage tray = null;
+		Shape shadow = null;
+		const double offset = 40.0;
+		bool updown = false;
+		readonly Point initialBallPos = new Point(90, 60);
 		// Are we ready for interactions like slider-changes to alter the 
 		// parts of our display (like polygons or images or arrows)? Probably not until those things 
 		// have been constructed!
@@ -33,102 +35,90 @@ namespace GraphicsBook
             InitializeComponent();
             InitializeCommands();
 
-            // Now add some graphical items in the main drawing area, whose name is "Paper"
-            gp = this.FindName("Paper") as GraphPaper;
+			// Now add some graphical items in the main drawing area, whose name is "Paper"
+			canvas = this.FindName("Canvas") as Canvas;
             
-
             // Track mouse activity in this window
             MouseLeftButtonDown += MyMouseButtonDown;
             MouseLeftButtonUp += MyMouseButtonUp;
             MouseMove += MyMouseMove;
+			
+			// And a photo from a file, then another that's 
+			// created on-the-fly instead of read from a file. 
 
-			#region Triangles, segments, dots
+			tray = new GImage("./tray.png");
+			tray.Stretch = Stretch.None;
+			canvas.Children.Add(tray);
 
-			myDots = new Dot[3];
-			myDots[0] = new Dot(new Point(-40, 60));
-			myDots[1] = new Dot(new Point(40, 60));
-			myDots[2] = new Dot(new Point(40, -60));
-			for (int i = 0; i < 3; i++)
-			{
-				myDots[i].MakeDraggable(gp);
-				gp.Children.Add(myDots[i]);
-			}
+			ball = new GImage("./ball.png");
+			ball.Stretch = Stretch.None;
+			ball.Position = initialBallPos;
+			canvas.Children.Add(ball);
 
-			myCircle = new Circle(new Point(0, 0), 0.0);
-			UpdateCircle(myDots[0].Position, myDots[1].Position, myDots[2].Position);
-			gp.Children.Add(myCircle);
-
-			DependencyPropertyDescriptor dotDescr = DependencyPropertyDescriptor.FromProperty(Dot.PositionProperty, typeof(Dot));
-			if (dotDescr != null)
-			{
-				dotDescr.AddValueChanged(myDots[0], OnDotMove);
-				dotDescr.AddValueChanged(myDots[1], OnDotMove);
-				dotDescr.AddValueChanged(myDots[2], OnDotMove);
-			}
-
-			#endregion
-
-			ready = true; // Now we're ready to have sliders and buttons influence the display.
+			shadow = new Ellipse();
+			shadow.Width = 30.0;
+			shadow.Height = 10.0;
+			shadow.Fill = new SolidColorBrush(Colors.Gray);
+			shadow.Margin = new Thickness(ball.Position.X, ball.Position.Y - offset, 0.0, 0.0);
+			canvas.Children.Add(shadow);
+            
+            ready = true; // Now we're ready to have sliders and buttons influence the display.
         }
 
-		protected void OnDotMove(object sender, EventArgs args)
-		{
-			if(ready)
+		private void OnMovementChange(object sender, RoutedEventArgs e) {
+			var cb = sender as CheckBox;
+			updown = cb.IsChecked.Value;
+			if (updown)
 			{
-				UpdateCircle(myDots[0].Position, myDots[1].Position, myDots[2].Position);
+				shadow.Margin = new Thickness(ball.Position.X, initialBallPos.Y - offset, 0.0, 0.0);
 			}
-			
+			else
+			{
+				shadow.Margin = new Thickness(ball.Position.X, ball.Position.Y - offset, 0.0, 0.0);
+			}
 		}
 
-		protected void UpdateCircle(Point P, Point Q, Point R)
+		private void OnShadowTypeChange(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
 		{
-			if ((P.X == Q.X) & (P.Y == Q.Y))
-			{
-				P.X += .001 * (2 * autoRand.NextDouble() - 1);
-				P.Y += .001 * (2 * autoRand.NextDouble() - 1);
-			}
-			if ((Q.X == R.X) & (Q.Y == R.Y))
-			{
-				R.X += .001 * (2 * autoRand.NextDouble() - 1);
-				R.Y += .001 * (2 * autoRand.NextDouble() - 1);
-			}
+			if (!ready) return;
 
-			Point A = P + (Q - P) / 2.0;
-			Point B = Q + (R - Q) / 2.0;
-			Vector v = Q - P;
-			double tmp = v.X;
-			v.X = v.Y;
-			v.Y = -tmp;
-			v.Normalize();
-			Vector w = R - Q;
-			w.Normalize();
-			tmp = w.X;
-			w.X = w.Y;
-			w.Y = -tmp;
+			canvas.Children.Remove(shadow);
 
-			double a = v.X;
-			double b = w.X;
-			double c = v.Y;
-			double d = w.Y;
-			double det = a * d - b * c;
-			// If the det is too small (or zero), we can fix it by moving the x-coordinates of v and w by 1 / 1000,
-            // which is too small to have any visual impact.
-            if (Math.Abs(det) < 1e-9)
+			var cb = sender as ComboBox;
+			var type = cb.SelectedValue.ToString();
+
+			if (type == "Ellipse")
 			{
-				a += .001;
-				c += .001;
+				shadow = new Ellipse();
+				shadow.Width = 30.0;
+				shadow.Height = 10.0;
+				canvas.Children.Add(shadow);
+			}
+			else if (type == "Disk")
+			{
+				shadow = new Ellipse();
+				shadow.Width = 30.0;
+				shadow.Height = 30.0;
+				canvas.Children.Add(shadow);
+			}
+			else if (type == "Square")
+			{
+				shadow = new Rectangle();
+				shadow.Width = 30.0;
+				shadow.Height = 30.0;
+				canvas.Children.Add(shadow);
 			}
 
-			Vector target = (P - R) / 2.0;
-			double t = -(d * target.X - b * target.Y);
-			double s = (-c * target.X + a * target.Y);
-			t /= det;
-
-			Point C = A + t * v;
-			double r = (P - C).Length;
-			myCircle.Position = C;
-			myCircle.Radius = r;
-
+			shadow.Fill = new SolidColorBrush(Colors.Gray);
+			if(updown)
+			{
+				shadow.Margin = new Thickness(ball.Position.X, initialBallPos.Y - offset, 0.0, 0.0);
+			} else
+			{
+				shadow.Margin = new Thickness(ball.Position.X, ball.Position.Y - offset, 0.0, 0.0);
+			}
+			
+			
 		}
 
 		#region Interaction handling -- sliders and buttons
@@ -163,6 +153,45 @@ namespace GraphicsBook
             e.Handled = true;
         }
 
+        /* Event handler for a click on button one */
+        void OnXPositionChange(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            e.Handled = true;
+            // Be sure to not respond to slider-moves until all objects have been constructed. 
+            if (ready)
+            {
+				ball.Position = new Point(e.NewValue, ball.Position.Y);
+				
+				if (updown)
+				{
+					shadow.Margin = new Thickness(ball.Position.X, initialBallPos.Y - offset, 0.0, 0.0);
+				}
+				else
+				{
+					shadow.Margin = new Thickness(ball.Position.X, ball.Position.Y - offset, 0.0, 0.0);
+				}
+			}
+        }
+
+		void OnYPositionChange(object sender, RoutedPropertyChangedEventArgs<double> e)
+		{
+			e.Handled = true;
+			// Be sure to not respond to slider-moves until all objects have been constructed. 
+			if (ready)
+			{
+				ball.Position = new Point(ball.Position.X, e.NewValue);
+				if (updown)
+				{
+					shadow.Margin = new Thickness(ball.Position.X, initialBallPos.Y - offset, 0.0, 0.0);
+				}
+				else
+				{
+					shadow.Margin = new Thickness(ball.Position.X, ball.Position.Y - offset, 0.0, 0.0);
+				}
+			}
+		}
+
+		
         #endregion
 
         #region Menu, command, and keypress handling
@@ -224,5 +253,6 @@ namespace GraphicsBook
         }
         #endregion //Menu, command and keypress handling
 
+       
     }
 }

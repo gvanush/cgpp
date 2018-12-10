@@ -1,0 +1,70 @@
+﻿<Window x:Class="CG_Chapter2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CG_Chapter2"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="800">
+    <Canvas xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" ClipToBounds="False">
+
+        <Canvas.Resources>
+            <ControlTemplate x:Key="ClockHandTemplate">
+                <Polygon Points="-0.3, -1   -0.2, 8   0, 9   0.2, 8   0.3, -1" Fill="Navy" />
+            </ControlTemplate>
+        </Canvas.Resources>
+
+
+        <Ellipse
+    Canvas.Left="-10.0" Canvas.Top="-10.0"
+    Width="20.0" Height="20.0"
+    Fill="lightgray" />
+
+        <Ellipse
+    Canvas.Left="-0.5" Canvas.Top="-9.5"
+    Width="1.0" Height="1.0"
+    Fill="Blue" />
+
+        <Control Name="MinuteHand" Template="{StaticResource ClockHandTemplate}">
+            <Control.RenderTransform>
+                <TransformGroup>
+                    <RotateTransform Angle="180" CenterX="0" CenterY="0"/>
+                    <RotateTransform x:Name="ActualTimeMinute" Angle="0"/>
+                </TransformGroup>
+            </Control.RenderTransform>
+        </Control>
+
+        <Control Name="HourHand" Template="{StaticResource ClockHandTemplate}">
+            <Control.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="1.7" ScaleY="0.7" CenterX="0" CenterY="0"/>
+                    <RotateTransform Angle="180" CenterX="0" CenterY="0"/>
+                    <RotateTransform x:Name="ActualTimeHour" Angle="0"/>
+                </TransformGroup>
+            </Control.RenderTransform>
+        </Control>
+
+        <Canvas.Triggers>
+            <EventTrigger RoutedEvent="FrameworkElement.Loaded">
+                <BeginStoryboard>
+                    <Storyboard>
+                        <DoubleAnimation Storyboard.TargetName="ActualTimeHour" Storyboard.TargetProperty="Angle" From="0.0" To="360.0" Duration="1:00:00.0" RepeatBehavior="Forever"/>
+                        <DoubleAnimation Storyboard.TargetName="ActualTimeMinute" Storyboard.TargetProperty="Angle" From="0.0" To="360.0" Duration="00:01:00.0" RepeatBehavior="Forever"/>
+                    </Storyboard>
+                </BeginStoryboard>
+            </EventTrigger>
+        </Canvas.Triggers>
+
+
+        <Canvas.RenderTransform>
+            <TransformGroup>
+                <ScaleTransform ScaleX="4.8" ScaleY="4.8"
+                         CenterX="0" CenterY="0"/>
+                <TranslateTransform X="60" Y="60"/>
+            </TransformGroup>
+        </Canvas.RenderTransform>
+    </Canvas>
+    
+</Window>
+
